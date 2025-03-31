@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แอปจดการประชุม</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0Hhonpy0DGsuPwiIkCPjq4MxOCjqx1Pq7tc3QQX0lWLLEln4f9l7md8xqWAyKK5reIQKIoZWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ส่วนของ CSS: กำหนดสไตล์ของหน้าเว็บ */
+        :root {
+            /* กำหนดตัวแปร CSS สำหรับสีและค่าที่ใช้ซ้ำ */
+            --primary-color: #a5693d; /* สีน้ำตาล */
+            --primary-hover-color: #824f2b;
+            --secondary-color: #e0c2a3; /* สีเบจ */
+            --text-color: #333; /* สีเทาเข้ม */
+            --border-color: #b1947b; /* สีน้ำตาลอ่อน */
+            --border-radius: 0.5vw;
+            --box-shadow: 0 0.2vw 0.5vw rgba(0, 0, 0, 0.1);
+            --input-focus-border-color: #d38665;
+            --font-family: 'Sarabun', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 2vw;
+            background-color: #f5f5f0; /* สีครีม */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1vw;
+            font-size: 3vw;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 95%;
+            max-width: 1200px;
+            margin-bottom: 2vw;
+        }
+
+        #chart-container {
+            width: 65%;
+            height: 50vh; /* กำหนดความสูงเริ่มต้น */
+            background-color: var(--secondary-color);
+            padding: 2vw;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: auto;
+            resize: both; /* เพิ่มความสามารถในการปรับขนาด */
+            overflow: auto;
+        }
+
+        #chart-container h1 {
+            font-size: 2vw;
+            margin-bottom: 1vw;
+        }
+
+        .chart-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1vw;
+        }
+
+        .chart-box {
+            width: 10vw; /* ปรับความกว้าง */
+            height: 4vw; /* ปรับความสูง */
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin: 0.5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #374151;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chart-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5vw 1vw rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-box h3 {
+            font-size: 2.5vw; /* ปรับขนาด font */
+            margin-bottom: 0;
+            color: white; /* เปลี่ยนสีตัวอักษรเป็นขาว */
+            font-weight: bold; /* ทำให้ตัวอักษรเป็นตัวหนา */
+        }
+
+        .chart-box input {
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.3vw; /* ปรับ padding */
+            width: 80%; /* ปรับความกว้าง */
+            font-size: 1vw; /* ปรับขนาด font */
+            text-align: center;
+            position: absolute;
+            bottom: 0.5vw;
+            left: 10%; /* ปรับตำแหน่ง */
+            background-color: transparent;
+            color: white; /* เปลี่ยนสีตัวอักษรเป็นขาว */
+            font-weight: bold; /* ทำให้ตัวอักษรเป็นตัวหนา */
+        }
+
+        .chart-box input:focus {
+            background-color: var(--input-focus-background-color);
+            outline: none;
+            border-bottom-color: var(--input-focus-border-color);
+        }
+
+        .orange-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5vw 1vw; /* ปรับ padding */
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8vw; /* ปรับขนาด font-size */
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* จัดให้ไอคอนและข้อความอยู่ตรงกลาง */
+        }
+
+        .orange-button i {
+            font-size: 1vw; /* ปรับขนาดไอคอน */
+            margin-right: 0.2vw; /* ปรับระยะห่างระหว่างไอคอนและข้อความ */
+        }
+
+        .orange-button:hover {
+            background-color: var(--primary-hover-color);
+        }
+
+        .add-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #notes-container {
+            width: 30%;
+            background-color: #f0e6d2; /* สีเบจอ่อน */
+            padding: 2vw;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            color: var(--text-color);
+        }
+
+        #notes-container h2 {
+            font-size: 2vw;
+            margin-bottom: 1vw;
+        }
+
+        #note-input {
+            width: 100%;
+            height: 25vw;
+            padding: 1vw;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1vw;
+            resize: vertical;
+            background-color: #fff; /* สีขาว */
+            color: var(--text-color);
+        }
+
+        #save-note-btn {
+            margin-top: 1vw;
+        }
+
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 1vw;
+        }
+
+        .export-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5vw 1vw;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8vw;
+            transition: background-color 0.3s ease;
+            margin: 0 0.5vw;
+            display: flex;
+            align-items: center;
+        }
+
+        .export-button i {
+            font-size: 1vw;
+            margin-right: 0.2vw;
+        }
+
+        .export-button:hover {
+            background-color: var(--primary-hover-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            #chart-container, #notes-container {
+                width: 95%;
+            }
+
+            .chart-box {
+                width: 45%;
+                height: 10vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>แอปสำหรับการประชุม</h1>
+    <div class="container">
+        <section id="chart-container">
+            <h1>ผังประชุม</h1>
+            <div class="chart-row">
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName1" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName1">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName2" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName2">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName3" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName3">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName4" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName4">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName5" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName5">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-row" id="committee-row">
+                <div class="chart-box" data-name="กรรมการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="committeeName1" placeholder="ชื่อผู้มาประชุม" data-input-name="committeeName1">
+                </div>
+                <div class="chart-box" data-name="กรรมการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="committeeName2" placeholder="ชื่อผู้มาประชุม" data-input-name="committeeName2">
+                </div>
+                <div class="chart-box" data-name="กรรมการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="committeeName3" placeholder="ชื่อผู้มาประชุม" data-input-name="committeeName3">
+                </div>
+                <div class="chart-box" data-name="กรรมการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="committeeName4" placeholder="ชื่อผู้มาประชุม" data-input-name="committeeName4">
+                </div>
+                <div class="chart-box" data-name="กรรมการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="committeeName5" placeholder="ชื่อผู้มาประชุม" data-input-name="committeeName5">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-row" id="additional-row">
+                 <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName6" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName6">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName7" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName7">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName8" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName8">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName9" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName9">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName10" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName10">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-row" id="additional-row2">
+                  <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName11" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName11">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName12" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName12">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName13" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName13">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName14" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName14">
+                </div>
+                 <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="participantName15" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName15">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box" data-name="เลขานุการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="secretaryName1" placeholder="ชื่อผู้มาประชุม" data-input-name="secretaryName1">
+                </div>
+                <div class="chart-box" data-name="เลขานุการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="secretaryName2" placeholder="ชื่อผู้มาประชุม" data-input-name="secretaryName2">
+                </div>
+                 <div class="chart-box" data-name="เลขานุการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="secretaryName3" placeholder="ชื่อผู้มาประชุม" data-input-name="secretaryName3">
+                </div>
+                <div class="chart-box" data-name="เลขานุการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="secretaryName4" placeholder="ชื่อผู้มาประชุม" data-input-name="secretaryName4">
+                </div>
+                <div class="chart-box" data-name="เลขานุการ">
+                    <h3 class="title" style="font-size: 2.5vw;"></h3>
+                    <input type="text" id="secretaryName5" placeholder="ชื่อผู้มาประชุม" data-input-name="secretaryName5">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="add-btn-container add-row-buttons" style="margin-top: 0.69vw;">
+                    <button id="add-row-btn" class="orange-button">
+                        <i class="fas fa-plus"></i>
+                        <span>บวก</span>
+                    </button>
+                    <button id="remove-row-btn" class="orange-button" style="margin-left: 0.69vw;">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <article id="notes-container">
+            <h2>บันทึกการประชุม</h2>
+            <textarea id="note-input" placeholder="พิมพ์บันทึก..."></textarea>
+            <button id="save-note-btn" class="orange-button">
+                <i class="fas fa-save"></i>
+                <span>บันทึก</span>
+            </button>
+        </article>
+    </div>
+    <div class="export-buttons">
+        <button id="export-text-btn" class="export-button">
+            <i class="fas fa-file-alt"></i>
+            <span>Export Text</span>
+        </button>
+        <button id="export-pdf-btn" class="export-button">
+            <i class="fas fa-file-pdf"></i>
+            <span>Export PDF</span>
+        </button>
+    </div>
+
+    <script>
+        /* ส่วนของ JavaScript: กำหนดการทำงานของหน้าเว็บ */
+
+        // ตัวแปร DOM ที่เก็บ element ต่างๆ ที่ใช้ในการทำงาน
+        const chartContainer = document.getElementById("chart-container");
+        const noteInput = document.getElementById("note-input");
+        const addRowBtn = document.getElementById("add-row-btn");
+        const removeRowBtn = document.getElementById("remove-row-btn");
+        const saveNoteBtn = document.getElementById("save-note-btn"); // เพิ่มตัวแปรสำหรับปุ่มบันทึก
+        const exportTextBtn = document.getElementById("export-text-btn"); // เพิ่มตัวแปรสำหรับปุ่ม export text
+        const exportPdfBtn = document.getElementById("export-pdf-btn");   // เพิ่มตัวแปรสำหรับปุ่ม export pdf
+
+        // ตัวแปรอื่นๆ
+        let selectedPerson = "";
+        let isNameAdded = false;
+        let previousPersonName = "";
+
+        // ตัวแปรสำหรับเก็บ element ที่กำลังถูกลาก
+        let draggedItem = null;
+
+        // เพิ่ม event listener สำหรับ drag and drop
+        chartContainer.addEventListener("dragstart", (event) => {
+            draggedItem = event.target;
+            event.dataTransfer.setData("text/plain", null); // ข้อมูล dummy สำหรับ Firefox
+        });
+
+        chartContainer.addEventListener("dragover", (event) => {
+            event.preventDefault();
+        });
+
+        chartContainer.addEventListener("drop", (event) => {
+            if (event.target.classList.contains("chart-box") && event.target !== draggedItem) {
+                const dropTarget = event.target;
+                const dropTargetParent = dropTarget.parentElement;
+                const draggedItemParent = draggedItem.parentElement;
+
+                // สลับตำแหน่งของ element
+                if (dropTargetParent === draggedItemParent) {
+                    const dropTargetIndex = Array.from(dropTargetParent.children).indexOf(dropTarget);
+                    const draggedItemIndex = Array.from(draggedItemParent.children).indexOf(draggedItem);
+
+                    if (dropTargetIndex > draggedItemIndex) {
+                        dropTargetParent.insertBefore(draggedItem, dropTarget.nextSibling);
+                    } else {
+                        dropTargetParent.insertBefore(draggedItem, dropTarget);
+                    }
+                }
+            }
+        });
+
+        // เพิ่ม attribute draggable="true" ให้กับ chart-box
+        const chartBoxes = chartContainer.querySelectorAll(".chart-box");
+        chartBoxes.forEach((box) => {
+            box.setAttribute("draggable", "true");
+        });
+
+        // Event listener สำหรับ container หลักของผังที่นั่ง เพื่อจัดการการคลิก
+        chartContainer.addEventListener("click", (event) => {
+            // ใช้ destructuring เพื่อแยก target และ classList ออกมาจาก event
+            const { target } = event;
+            const { classList } = target;
+
+            // แยกการจัดการ event แต่ละประเภทไปที่ฟังก์ชันของมันเอง
+            if (classList.contains("add-person-btn")) {
+                handleAddPersonBtnClick(target);
+            } else if (classList.contains("remove-person-btn")) {
+                handleRemovePersonBtnClick(target);
+            } else if (classList.contains("chart-box") && target.tagName !== 'INPUT') {
+                handleChartBoxClick(event);
+            } else if (target === addRowBtn) {
+                handleAddRowBtnClick();
+            } else if (target === removeRowBtn) {
+                handleRemoveRowBtnClick();
+            }
+        });
+
+        // เพิ่ม event listener ให้กับ chart-box เริ่มต้นที่มีอยู่แล้ว
+        const initialChartBoxes = chartContainer.querySelectorAll(".chart-box");
+        initialChartBoxes.forEach(box => {
+            box.addEventListener("click", handleChartBoxClick);
+        });
+
+        noteInput.addEventListener('click', () => {
+            isNameAdded = false;
+        });
+
+        // ฟังก์ชันสำหรับจัดการการคลิกที่ div ที่นั่ง
+        function handleChartBoxClick(event) {
+            const target = event.target;
+            selectedPerson = target.dataset.name;
+            const h3Element = target.querySelector('.title');
+            const inputElement = target.querySelector('input'); // Get the input element
+            const personName = inputElement.value; // Get the value from the input
+
+            if (personName !== previousPersonName) {
+                noteInput.value += "\n" + personName + "  :  ";
+                noteInput.focus();
+                previousPersonName = personName;
+                if (!target.classList.contains('clicked')) {
+                    target.classList.add('clicked');
+                    h3Element.style.fontSize = '0.8vw';
+                    h3Element.style.transform = 'translateY(0.2vw)';
+                }
+            }
+        }
+
+        // Event listener สำหรับปุ่มบันทึก
+        saveNoteBtn.addEventListener("click", () => {
+            const chartBoxes = chartContainer.querySelectorAll(".chart-box");
+            let meetingContent = "ผังที่นั่ง:\n";
+            chartBoxes.forEach((box) => {
+                const title = box.querySelector("h3").textContent;
+                const name = box.querySelector("input").value;
+                meetingContent += `${title}: ${name}\n`;
+            });
+
+            meetingContent += "\nบันทึกการประชุม:\n" + noteInput.value;
+            localStorage.setItem('meetingContent', meetingContent);
+            alert("บันทึกข้อมูลการประชุมแล้ว!");
+        });
+
+        // ฟังก์ชันสำหรับสร้าง chart-box
+        function createChartBox() {
+            const chartBox = document.createElement("div");
+            chartBox.className = "chart-box";
+            chartBox.dataset.name = "ผู้เข้าร่วม";
+
+            const title = document.createElement("h3");
+            title.className = "title";
+            chartBox.appendChild(title);
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.placeholder = "ชื่อผู้มาประชุม";
+            input.dataset.inputName = "participantName";
+            chartBox.appendChild(input);
+
+            chartBox.setAttribute("draggable", "true"); // ทำให้ chart-box ลากได้
+            chartBox.addEventListener("click", handleChartBoxClick);
+            return chartBox;
+        }
+
+        // ฟังก์ชันสำหรับจัดการการคลิกปุ่มเพิ่มคน
+        function handleAddPersonBtnClick(buttonElement) {
+            const chartRow = buttonElement.closest(".chart-row");
+            const newPersonBox = createChartBox();
+            chartRow.insertBefore(newPersonBox, buttonElement.parentElement);
+        }
+
+        // ฟังก์ชันสำหรับจัดการการคลิกปุ่มลบคน
+        function handleRemovePersonBtnClick(buttonElement) {
+            const chartRow = buttonElement.closest(".chart-row");
+            const personBoxes = chartRow.querySelectorAll(".chart-box");
+            if (personBoxes.length > 1) {
+                chartRow.removeChild(personBoxes[personBoxes.length - 2]);
+            }
+        }
+
+        // ฟังก์ชันสำหรับจัดการการคลิกปุ่มเพิ่มแถว
+        function handleAddRowBtnClick() {
+            const newChartRow = document.createElement("div");
+            newChartRow.className = "chart-row";
+            newChartRow.innerHTML = `
+                <div class="chart-box" data-name="ผู้เข้าร่วม"><h3 class="title"></h3>
+                    <input type="text" id="participantName" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName">
+                </div>
+                <div class="chart-box" data-name="ผู้เข้าร่วม">
+                    <h3 class="title"></h3>
+                    <input type="text" id="participantName" placeholder="ชื่อผู้มาประชุม" data-input-name="participantName">
+                </div>
+                <div class="add-btn-container">
+                    <button class="orange-button add-person-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>เพิ่ม</span>
+                    </button>
+                    <button class="orange-button remove-person-btn">
+                        <i class="fas fa-minus"></i>
+                        <span>ลบ</span>
+                    </button>
+                </div>
+            `;
+            chartContainer.insertBefore(newChartRow, addRowBtn.parentElement.parentElement);
+            const newChartBoxes = newChartRow.querySelectorAll(".chart-box");
+            newChartBoxes.forEach(box => {
+                box.addEventListener("click", handleChartBoxClick);
+            });
+             // เพิ่ม event listener สำหรับ drag and drop ให้กับ chart-box ใหม่
+            const chartBoxes = newChartRow.querySelectorAll(".chart-box");
+            chartBoxes.forEach((box) => {
+                box.setAttribute("draggable", "true");
+            });
+        }
+
+        // ฟังก์ชันสำหรับจัดการการคลิกปุ่มลบแถว
+        function handleRemoveRowBtnClick() {
+            const chartRows = chartContainer.querySelectorAll(".chart-row");
+            if (chartRows.length > 1) {
+                chartContainer.removeChild(chartRows[chartRows.length - 2]);
+            }
+        }
+
+        // โหลดโน้ตจาก Local Storage เมื่อหน้าเว็บโหลด
+        window.onload = () => {
+            const savedNotes = localStorage.getItem('meetingNotes');if (savedNotes) {
+                noteInput.value = savedNotes;
+            }
+        };
+
+        // ฟังก์ชันสำหรับ export ข้อมูลเป็นไฟล์ text
+        function exportToText() {
+            const chartBoxes = chartContainer.querySelectorAll(".chart-box");
+            let textContent = "ผังที่นั่ง:\n";
+            chartBoxes.forEach((box) => {
+                const title = box.querySelector("h3").textContent;
+                const name = box.querySelector("input").value;
+                textContent += `${title}: ${name}\n`;
+            });
+
+            textContent += "\nบันทึกการประชุม:\n" + noteInput.value;
+
+            const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "meeting_notes.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ฟังก์ชันสำหรับ export ข้อมูลเป็นไฟล์ PDF (ใช้ jsPDF)
+        function exportToPdf() {
+            const { jsPDF } = window.jspdf;
+
+            const chartBoxes = chartContainer.querySelectorAll(".chart-box");
+            let pdfContent = "ผังที่นั่ง:\n";
+            chartBoxes.forEach((box) => {
+                const title = box.querySelector("h3").textContent;
+                const name = box.querySelector("input").value;
+                pdfContent += `${title}: ${name}\n`;
+            });
+
+            pdfContent += "\nบันทึกการประชุม:\n" + noteInput.value;
+            const doc = new jsPDF();
+            doc.setFont('Sarabun', 'normal'); // Set font to Sarabun
+            doc.addFont('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap', 'Sarabun', 'normal');
+
+            // Split the content into lines
+            const lines = pdfContent.split('\n');
+            let y = 10; // Initial Y position
+
+            lines.forEach(line => {
+                doc.text(line, 10, y);
+                y += 10; // Increment Y for the next line
+            });
+            doc.save("meeting_notes.pdf");
+        }
+
+        // Event listener สำหรับปุ่ม export text
+        exportTextBtn.addEventListener("click", exportToText);
+
+        // Event listener สำหรับปุ่ม export pdf
+        exportPdfBtn.addEventListener("click", exportToPdf);
+    </script>
+</body>
+</html>
